@@ -25,6 +25,14 @@ export function getArt(id: number): Artwork | undefined {
   return db.prepare(`SELECT ${COLS} FROM art_art WHERE id = ?`).get(id) as Artwork | undefined;
 }
 
+export function artIdsPage(offset: number, limit: number): number[] {
+  return (db.prepare("SELECT id FROM art_art ORDER BY id LIMIT ? OFFSET ?").all(limit, offset) as { id: number }[]).map((r) => r.id);
+}
+
+export function artCount(): number {
+  return (db.prepare("SELECT COUNT(*) AS n FROM art_art").get() as { n: number }).n;
+}
+
 export function randomArt(): Artwork | undefined {
   // Random id pick avoids sorting all rows; falls back if ids have gaps.
   const { max } = db.prepare("SELECT MAX(id) AS max FROM art_art").get() as { max: number };

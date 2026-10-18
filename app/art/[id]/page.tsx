@@ -1,102 +1,66 @@
-"use client";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { cache } from "react";
+import ArtworkDetail from "@/components/ArtworkDetail";
+import { getArt } from "@/lib/db";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import Header from "@/components/Header";
-import ArtImage from "@/components/ArtImage";
-import { fetchJson, useStore } from "@/components/store";
-import type { Artwork } from "@/lib/db";
+type Props = { params: Promise<{ id: string }> };
 
-export default function DetailPage() {
-  const id = Number(useParams<{ id: string }>().id);
-  const router = useRouter();
-  const { cache, gallery, fromGallery, openLightbox } = useStore();
-  const [art, setArt] = useState<Artwork | null>(cache.get(id) ?? null);
-  const [error, setError] = useState<string | null>(null);
-  const [tick, setTick] = useState(0);
+// Shared by generateMetadata and the page so the row is read once per request.
+const load = cache(async (params: Props["params"]) => {
+  const { id } = await params;
+  return /^\d+$/.test(id) ? getArt(Number(id)) : undefined;
+});
 
-  useEffect(() => {
-    const cached = cache.get(id);
-    if (cached) { setArt(cached); return; }
-    const ctl = new AbortController();
-    setArt(null); setError(null);
-    fetchJson<Artwork>(`/api/arts/${id}`, ctl.signal)
-      .then((a) => { cache.set(a.id, a); setArt(a); })
-      .catch((e) => { if (!ctl.signal.aborted) setError((e as Error).message); });
-    return () => ctl.abort();
-  }, [id, cache, tick]);
+// "AACHEN, Hans von" → "Hans von Aachen" for prose; the raw value stays on the page.
+function displayArtist(raw: string) {
+  const [last, first] = raw.split(", ");
+  const nice = last.toLowerCase().replace(/(^|[\s-])\p{L}/gu, (c) => c.toUpperCase());
+  return first ? `${first} ${nice}` : nice;
+}
 
-  const randomArtwork = async () => {
-    try {
-      const a = await fetchJson<Artwork>("/api/random");
-      cache.set(a.id, a);
-      fromGallery.current = false;
-      router.push(`/art/${a.id}`);
-    } catch (e) { setError((e as Error).message); }
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const art = await load(params);
+  if (!art) return { title: "Artwork not found", robots: { index: false } };
+  const artist = displayArtist(art.artist);
+  const title = `${art.title} by ${artist}`;
+  const description = [`${art.title} (${art.year}) by ${artist}`, art.type, art.location].filter(Boolean).join(". ") + ".";
+  const url = `/art/${art.id}`;
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: "article", url, title, description, images: [{ url: art.picture, alt: title }] },
+    twitter: { card: "summary_large_image", title, description, images: [art.picture] },
   };
+}
 
-  const alt = art ? `${art.title} by ${art.artist}` : "";
-  const galleryHref = gallery.current?.key ? `/?${gallery.current.key}` : "/";
+export default async function ArtworkPage({ params }: Props) {
+  const art = await load(params);
+  if (!art) notFound();
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "VisualArtwork",
+    name: art.title,
+    image: art.picture,
+    url: `${SITE_URL}/art/${art.id}`,
+    creator: { "@type": "Person", name: displayArtist(art.artist) },
+    dateCreated: art.year,
+    artMedium: art.type,
+    contentLocation: art.location ? { "@type": "Place", name: art.location } : undefined,
+    isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
+  };
 
   return (
     <>
-      <div className="sticky"><Header /></div>
-      <main className="detail-main">
-        <div className="detail-top">
-          <Link
-            href={galleryHref}
-            onClick={(e) => { if (fromGallery.current) { e.preventDefault(); router.back(); } }}
-          >← Back to gallery</Link>
-          <button type="button" className="btn btn-secondary" style={{ padding: "11px 18px" }} onClick={randomArtwork}>Random artwork</button>
-        </div>
-
-        {!art && !error && (
-          <div aria-busy="true" className="detail pulse">
-            <div className="well" style={{ minHeight: "60vh" }} />
-            <div className="wall-label" style={{ display: "flex", flexDirection: "column", gap: 12, position: "static" }}>
-              <div className="skel" style={{ height: 12, width: "30%" }} />
-              <div className="skel" style={{ height: 36, width: "90%" }} />
-              <div className="skel" style={{ height: 16, width: "55%" }} />
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div role="alert" className="centered" style={{ marginTop: "12vh" }}>
-            <p className="serif-msg">This artwork couldn&apos;t be loaded.</p>
-            <p className="mono-note">{error}</p>
-            <button type="button" className="btn btn-primary" onClick={() => setTick((t) => t + 1)}>Retry</button>
-          </div>
-        )}
-
-        {art && (
-          <article className="detail">
-            <div className="well">
-              <button type="button" aria-label={`View ${alt} fullscreen`} onClick={(e) => openLightbox(art, e.currentTarget)}>
-                <ArtImage key={art.id} src={art.picture} alt={alt} brokenStyle={{ width: "min(100%, 520px)", aspectRatio: "4 / 5" }} />
-              </button>
-            </div>
-            <aside aria-label="Wall label" className="wall-label">
-              <p className="eyebrow">Hallery No. {String(art.id).padStart(4, "0")}</p>
-              <h1>{art.title}</h1>
-              <button
-                type="button"
-                className="artist-btn"
-                aria-label={`Show all works by ${art.artist}`}
-                onClick={() => router.push(`/?${new URLSearchParams({ artist: art.artist })}`)}
-              >{art.artist}</button>
-              <p className="muted" style={{ margin: "2px 0 0" }}>{art.year}</p>
-              <div className="rule" />
-              <dl>
-                <div><dt>Medium</dt><dd>{art.type}</dd></div>
-                <div><dt>Collection</dt><dd>{art.location}</dd></div>
-              </dl>
-              <button type="button" className="btn-text" style={{ marginTop: 28, fontSize: 13 }} onClick={(e) => openLightbox(art, e.currentTarget)}>View fullscreen ↗</button>
-            </aside>
-          </article>
-        )}
-      </main>
+      <script
+        type="application/ld+json"
+        // Escape "<" so artwork text can never close the script tag.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <ArtworkDetail initial={art} />
     </>
   );
 }

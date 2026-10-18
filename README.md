@@ -31,6 +31,8 @@ Open http://localhost:3000.
 
 Import the repo in Vercel and deploy. No settings or environment variables are needed: `data/arts.sqlite3` ships inside the serverless functions (see `next.config.ts`) and is opened read-only.
 
+SEO is built in: per-artwork titles, descriptions and share images, schema.org `VisualArtwork` data, `robots.txt`, and sitemaps for every artwork. Canonical URLs use Vercel's production domain automatically; set `NEXT_PUBLIC_SITE_URL` if you add a custom domain.
+
 Page views are tracked with [Vercel Analytics](https://vercel.com/docs/analytics). Turn it on under the project's **Analytics** tab; until then the script does nothing.
 
 ## API
