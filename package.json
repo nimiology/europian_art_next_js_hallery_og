@@ -1,0 +1,30 @@
+{
+  "name": "hallery",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A quiet, museum-style browser for 51,459 artworks. Next.js + read-only SQLite.",
+  "repository": "github:nimiology/hallery",
+  "license": "MIT",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.5.0",
+    "better-sqlite3": "^12.4.1",
+    "next": "15.5.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}
