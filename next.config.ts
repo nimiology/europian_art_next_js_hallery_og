@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   // The DB is read at runtime via fs, so tell Vercel's file tracer to ship it with the API functions.
   outputFileTracingIncludes: {
     "/api/**": ["./data/arts.sqlite3"],

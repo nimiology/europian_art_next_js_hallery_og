@@ -4,6 +4,10 @@ A quiet, museum-style browser for a collection of **51,459 artworks**. Browse th
 
 Built with Next.js (App Router) and a bundled read-only SQLite database. No external database or setup required.
 
+[![Hallery walkthrough: browsing the collection, filtering by artist, opening an artwork, zooming in the lightbox, and Art of the moment](docs/demo.gif)](docs/demo.mp4)
+
+<sub>Click for the full-quality video.</sub>
+
 ## Screens
 
 - **Collection** (`/`): masonry gallery with title search, filter chips, sorting and "Load more". Filters live in the URL, so any view can be shared.
