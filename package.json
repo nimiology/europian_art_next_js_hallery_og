@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "A quiet, museum-style browser for 51,459 artworks. Next.js + read-only SQLite.",
-  "repository": "github:nimiology/hallery",
+  "repository": "github:nimiology/europian_art_next_js_hallery_og",
   "license": "MIT",
   "engines": {
     "node": "22.x"
