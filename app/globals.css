@@ -56,6 +56,8 @@ button { font-family: var(--sans); }
 .site-nav { display: flex; align-items: center; gap: clamp(14px, 2.5vw, 28px); font-size: 14px; }
 .site-nav a { text-decoration: none; }
 .site-nav a[aria-current="page"] { text-decoration: underline; }
+.gh-link { display: inline-flex; padding: 6px; margin: -6px; color: var(--muted); }
+.gh-link:hover { color: var(--ink); }
 .sticky { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
 .sticky .site-header { padding: 14px var(--gutter); }
 
